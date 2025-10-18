@@ -429,14 +429,20 @@ def main():
         return
     print(f"📊 共 {len(nodes_by_group)} 个分组，{stats['total']} 个节点")
     # 读取已有的 Gist ID，用于更新
-    current_gist_id = None
-    if os.path.exists("gist_id.txt"):
-        with open("gist_id.txt", "r") as f:
-            current_gist_id = f.read().strip()
+    # 读取已有的 Gist ID，用于更新
+    current_gist_id = os.getenv("GIST_ID")  # 优先使用固定环境变量
+    if current_gist_id:
+        print(f"📝 使用固定 Gist ID 更新: {current_gist_id}")
+    else:
+        # 如果没设置 GIST_ID，再尝试读取文件
+        if os.path.exists("gist_id.txt"):
+            with open("gist_id.txt", "r") as f:
+                current_gist_id = f.read().strip()
         if current_gist_id:
             print(f"📝 尝试更新现有 Gist: {current_gist_id}")
         else:
-            print("📝 Gist ID 文件为空，将创建新 Gist")
+            print("📝 未找到 Gist ID，将创建新 Gist")
+
     new_gist_id, sub_url = upload_to_gist(nodes_by_group, stats, current_gist_id)
     # 清理临时文件
     cleanup_temp_dir(temp_dir)

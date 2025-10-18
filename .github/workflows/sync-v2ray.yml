@@ -8,7 +8,6 @@ jobs:
   sync-to-gist:
     runs-on: ubuntu-latest
     permissions:
-      # GITHUB_TOKEN 只需要读取代码仓库内容的权限
       contents: read
 
     steps:
@@ -27,9 +26,9 @@ jobs:
 
       - name: Run sync script
         env:
-          # 将具有 gist 权限的 GIST_TOKEN 注入为环境变量
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
-          # 注入 WebDAV 连接信息
+          # 使用固定 Gist ID 更新
+          GIST_ID: ${{ secrets.GIST_ID }}
           WEBDAV_URL: ${{ secrets.WEBDAV_URL }}
           WEBDAV_USERNAME: ${{ secrets.WEBDAV_USERNAME }}
           WEBDAV_PASSWORD: ${{ secrets.WEBDAV_PASSWORD }}
@@ -39,6 +38,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gist-id
-          # 脚本会将 Gist ID 写入此文件
           path: gist_id.txt
           retention-days: 1
