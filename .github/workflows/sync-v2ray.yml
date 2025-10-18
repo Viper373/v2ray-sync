@@ -3,28 +3,38 @@ on:
   schedule:
     - cron: '0 */12 * * *' # 每12小时运行一次
   workflow_dispatch: # 允许手动触发
+
 jobs:
   sync-to-gist:
     runs-on: ubuntu-latest
     permissions:
       # GITHUB_TOKEN 只需要读取代码仓库内容的权限
       contents: read
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
+
       - name: Run sync script
         env:
           # 将具有 gist 权限的 GIST_TOKEN 注入为环境变量
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          # 注入 WebDAV 连接信息
+          WEBDAV_URL: ${{ secrets.WEBDAV_URL }}
+          WEBDAV_USERNAME: ${{ secrets.WEBDAV_USERNAME }}
+          WEBDAV_PASSWORD: ${{ secrets.WEBDAV_PASSWORD }}
         run: python main.py
+
       - name: Upload Gist ID as artifact
         uses: actions/upload-artifact@v4
         with:
