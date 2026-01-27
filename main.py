@@ -348,8 +348,22 @@ def upload_to_gist(nodes_by_group, stats, gist_id=None):
                 stats['failed'] += 1
         links_by_group[group_name] = group_links
     # Base64 编码订阅
-    raw_subscription_text = "\n".join(all_links)  # 1. 将明文链接合并
-    standard_subscription_b64 = base64.b64encode(raw_subscription_text.encode('utf-8')).decode('utf-8')
+    subscription_files = {}  # 用来存储 {文件名: Base64内容} 的字典
+
+    for group_name, links in links_by_group.items():
+        if links:  # 确保这个分组有节点
+            # 1. 清理分组名，使其适合作为文件名（去掉空格和特殊字符）
+            safe_name = "".join(c for c in group_name if c.isalnum() or c in ('-', '_')).rstrip()
+            if not safe_name:  # 如果清理后名称为空，使用默认名
+                safe_name = f"group_{list(links_by_group.keys()).index(group_name)}"
+
+            # 2. 将这个分组的明文链接合并，并进行一次Base64编码
+            raw_text = "\n".join(links)
+            encoded_content = base64.b64encode(raw_text.encode('utf-8')).decode('utf-8')
+
+            # 3. 存入字典，文件名为 subscription_分组名.txt
+            subscription_files[f"subscription_{safe_name}.txt"] = encoded_content
+            print(f"📁 已生成订阅分片: subscription_{safe_name}.txt (包含 {len(links)} 个节点)")
     # 可读格式
     readable_content = []
     for group_name, links in links_by_group.items():
@@ -362,13 +376,18 @@ def upload_to_gist(nodes_by_group, stats, gist_id=None):
         "Accept": "application/vnd.github.v3+json"
     }
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # 构建Gist文件字典，从单个文件变为多个文件
+    gist_files = {
+        "nodes_readable.txt": {"content": "\n".join(readable_content)}  # 可读文件保留
+    }
+    # 将我们生成的多个订阅文件字典合并进去
+    for filename, content in subscription_files.items():
+        gist_files[filename] = {"content": content}
+
     gist_data = {
         "description": f"V2Ray 订阅 - 更新: {timestamp}",
         "public": False,
-        "files": {
-            "subscription.txt": {"content": standard_subscription_b64},
-            "nodes_readable.txt": {"content": "\n".join(readable_content)}
-        }
+        "files": gist_files  # 这里现在包含了多个文件
     }
     try:
         if gist_id:
