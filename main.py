@@ -348,8 +348,7 @@ def upload_to_gist(nodes_by_group, stats, gist_id=None):
                 stats['failed'] += 1
         links_by_group[group_name] = group_links
     # Base64 编码订阅
-    all_content = "\n".join(all_links)
-    subscription_b64 = base64.b64encode(all_content.encode('utf-8')).decode('utf-8')
+    standard_subscription = "\n".join(all_links)
     # 可读格式
     readable_content = []
     for group_name, links in links_by_group.items():
@@ -366,7 +365,7 @@ def upload_to_gist(nodes_by_group, stats, gist_id=None):
         "description": f"V2Ray 订阅 - 更新: {timestamp}",
         "public": False,
         "files": {
-            "subscription.txt": {"content": subscription_b64},
+            "subscription.txt": {"content": standard_subscription},
             "nodes_readable.txt": {"content": "\n".join(readable_content)}
         }
     }
